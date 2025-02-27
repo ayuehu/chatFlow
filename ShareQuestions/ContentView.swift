@@ -30,7 +30,6 @@ struct ContentView: View {
                     if currentIndex > 0 {
                         CardView(item: items[shuffledIndices[currentIndex - 1]])
                             .offset(x: -UIScreen.main.bounds.width + offset)
-                            .opacity(offset > 0 ? offset/UIScreen.main.bounds.width : 0)
                     }
                     
                     // 当前卡片
@@ -43,7 +42,6 @@ struct ContentView: View {
                     if currentIndex < shuffledIndices.count - 1 {
                         CardView(item: items[shuffledIndices[currentIndex + 1]])
                             .offset(x: UIScreen.main.bounds.width + offset)
-                            .opacity(offset < 0 ? -offset/UIScreen.main.bounds.width : 0)
                     }
                 } else {
                     Text("加载中...")
@@ -91,14 +89,32 @@ struct ContentView: View {
                     }
                     .onEnded { gesture in
                         let threshold: CGFloat = 50
-                        withAnimation(.easeOut(duration: 0.2)) {  // 使用简单的缓出动画
-                            if gesture.translation.width < -threshold && currentIndex < shuffledIndices.count - 1 {
-                                currentIndex += 1
-                                markAsViewed()
-                            } else if gesture.translation.width > threshold && currentIndex > 0 {
-                                currentIndex -= 1
+                        let velocity = gesture.predictedEndLocation.x - gesture.location.x
+                        let screenWidth = UIScreen.main.bounds.width
+                        
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            if (gesture.translation.width < -threshold && currentIndex < shuffledIndices.count - 1) ||
+                               (velocity < -500 && currentIndex < shuffledIndices.count - 1) {
+                                offset = -screenWidth
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    currentIndex += 1
+                                    markAsViewed()
+                                    withAnimation(.none) {
+                                        offset = 0
+                                    }
+                                }
+                            } else if (gesture.translation.width > threshold && currentIndex > 0) ||
+                                      (velocity > 500 && currentIndex > 0) {
+                                offset = screenWidth
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    currentIndex -= 1
+                                    withAnimation(.none) {
+                                        offset = 0
+                                    }
+                                }
+                            } else {
+                                offset = 0
                             }
-                            offset = 0
                         }
                     }
             )
@@ -107,19 +123,33 @@ struct ContentView: View {
     }
     
     private func previousCard() {
-        withAnimation {
+        let screenWidth = UIScreen.main.bounds.width
+        withAnimation(.easeInOut(duration: 0.3)) {
+            offset = screenWidth
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             if currentIndex > 0 {
                 currentIndex -= 1
+                withAnimation(.none) {
+                    offset = 0
+                }
             }
         }
     }
     
     private func nextCard() {
-        withAnimation {
+        let screenWidth = UIScreen.main.bounds.width
+        withAnimation(.easeInOut(duration: 0.3)) {
+            offset = -screenWidth
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             if currentIndex < shuffledIndices.count - 1 {
                 currentIndex += 1
                 markAsViewed()
                 saveContext()
+                withAnimation(.none) {
+                    offset = 0
+                }
             }
         }
     }
