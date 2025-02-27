@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var currentIndex = 0
     @State private var offset: CGFloat = 0
     @State private var shuffledIndices: [Int] = [] // 存储随机打散的下标
+    @State private var isDragging = false  // 添加拖动状态标记
     
     var body: some View {
         NavigationView {
@@ -30,18 +31,21 @@ struct ContentView: View {
                     if currentIndex > 0 {
                         CardView(item: items[shuffledIndices[currentIndex - 1]])
                             .offset(x: -UIScreen.main.bounds.width + offset)
+                            .animation(.interactiveSpring(), value: offset)  // 添加弹性动画
                     }
                     
                     // 当前卡片
                     if currentIndex >= 0 && currentIndex <= shuffledIndices.count - 1 {
                         CardView(item: items[shuffledIndices[currentIndex]])
                             .offset(x: offset)
+                            .animation(.interactiveSpring(), value: offset)
                     }
                     
                     // 下一张卡片（如果有）
                     if currentIndex < shuffledIndices.count - 1 {
                         CardView(item: items[shuffledIndices[currentIndex + 1]])
                             .offset(x: UIScreen.main.bounds.width + offset)
+                            .animation(.interactiveSpring(), value: offset)
                     }
                 } else {
                     Text("加载中...")
@@ -85,18 +89,22 @@ struct ContentView: View {
             .gesture(
                 DragGesture()
                     .onChanged { gesture in
-                        offset = gesture.translation.width
+                        isDragging = true
+                        withAnimation(.interactiveSpring()) {
+                            offset = gesture.translation.width
+                        }
                     }
                     .onEnded { gesture in
+                        isDragging = false
                         let threshold: CGFloat = 50
                         let velocity = gesture.predictedEndLocation.x - gesture.location.x
                         let screenWidth = UIScreen.main.bounds.width
                         
-                        withAnimation(.easeInOut(duration: 0.3)) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             if (gesture.translation.width < -threshold && currentIndex < shuffledIndices.count - 1) ||
                                (velocity < -500 && currentIndex < shuffledIndices.count - 1) {
                                 offset = -screenWidth
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                                     currentIndex += 1
                                     markAsViewed()
                                     withAnimation(.none) {
@@ -106,7 +114,7 @@ struct ContentView: View {
                             } else if (gesture.translation.width > threshold && currentIndex > 0) ||
                                       (velocity > 500 && currentIndex > 0) {
                                 offset = screenWidth
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                                     currentIndex -= 1
                                     withAnimation(.none) {
                                         offset = 0
@@ -124,10 +132,10 @@ struct ContentView: View {
     
     private func previousCard() {
         let screenWidth = UIScreen.main.bounds.width
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
             offset = screenWidth
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             if currentIndex > 0 {
                 currentIndex -= 1
                 withAnimation(.none) {
@@ -139,10 +147,10 @@ struct ContentView: View {
     
     private func nextCard() {
         let screenWidth = UIScreen.main.bounds.width
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
             offset = -screenWidth
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             if currentIndex < shuffledIndices.count - 1 {
                 currentIndex += 1
                 markAsViewed()
