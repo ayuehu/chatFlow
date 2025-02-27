@@ -2,7 +2,7 @@
 //  ShareQuestionsApp.swift
 //  ShareQuestions
 //
-//  Created by ayue on 2025/2/23.
+//  Created by kaka on 2025/2/23.
 //
 
 import SwiftUI
@@ -10,7 +10,7 @@ import SwiftData
 
 @main
 struct ShareQuestionsApp: App {
-    var sharedModelContainer: ModelContainer = {
+    let container: ModelContainer = {
         let schema = Schema([
             Item.self,
         ])
@@ -25,8 +25,8 @@ struct ShareQuestionsApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            SplashView()  // 使用 SplashView 替换 ContentView
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(container)
     }
 }

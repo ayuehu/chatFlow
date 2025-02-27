@@ -2,7 +2,7 @@
 //  Item.swift
 //  ShareQuestions
 //
-//  Created by ayue on 2025/2/23.
+//  Created by kaka on 2025/2/23.
 //
 
 import Foundation
@@ -14,6 +14,8 @@ import MarkdownUI
 final class Item {
     var question: String
     var answer: String
+    var thinking: String = ""
+    var type: String = ""
     var timestamp: Date
     var isViewed: Bool
     
@@ -21,9 +23,10 @@ final class Item {
     var theme: Theme {
         Theme()
             .text {
-                FontFamily(.system())
-                FontSize(.em(1.0))
-                ForegroundColor(.primary)
+                FontFamily(.system())  // PingFang SC 使用系统字体
+                FontSize(.em(0.9375))  // 15px
+                FontWeight(.regular)    // normal
+                ForegroundColor(Color(hex: "#585A73"))
             }
             .heading1 { configuration in
                 VStack(alignment: .leading, spacing: 8) {
@@ -46,28 +49,64 @@ final class Item {
             .strong {
                 FontWeight(.bold)
                 FontFamily(.system())
+                ForegroundColor(Color(hex: "#585A73"))
             }
             .link {
                 ForegroundColor(.blue)
             }
-            .listItem { configuration in
-                HStack(alignment: .firstTextBaseline) {
-                    Text("•").foregroundColor(.secondary)
-                    configuration.label
-                }
-            }
+//            .listItem { configuration in
+//                HStack(alignment: .firstTextBaseline) {
+//                    Text("•").foregroundColor(.secondary)
+//                    configuration.label
+//                }
+//            }
             .codeBlock { configuration in
                 configuration.label
                     .padding()
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(8)
             }
+            .paragraph { configuration in
+                configuration.label
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(nil)  // 允许多行
+                    .padding(.vertical, 4)
+                    .frame(maxWidth: .infinity, alignment: .leading)  // 确保文本可以占满宽度
+            }
+            .blockquote { configuration in
+                configuration.label
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(nil)
+                    .padding(.leading, 16)
+            }
+            .table { configuration in
+                VStack(alignment: .leading, spacing: 8) {
+                    configuration.label
+                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(nil)
+                        .padding(.vertical, 4)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .tableCell { configuration in
+                configuration.label
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(nil)
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
+            }
     }
     
     // Markdown 视图
     var markdownContent: some View {
-        Markdown(answer)
-            .markdownTheme(theme)
+        ScrollView {  // 添加 ScrollView 确保内容可以滚动
+            Markdown(answer)
+                .markdownTheme(theme)
+                .lineSpacing(9)
+                .kerning(0.2)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)  // 确保文本可以占满宽度
+        }
     }
     
     init(question: String, answer: String, timestamp: Date = Date(), isViewed: Bool = false) {
@@ -76,34 +115,13 @@ final class Item {
         self.timestamp = timestamp
         self.isViewed = isViewed
     }
-}
-
-// 预览支持
-#if DEBUG
-extension Item {
-    static var preview: Item {
-        Item(
-            question: "测试问题",
-            answer: """
-            # 标题1
-            ## 标题2
-            ### 标题3
-            
-            普通文本
-            
-            **粗体文本**
-            
-            - 列表项1
-            - 列表项2
-            
-            [链接文本](https://example.com)
-            
-            ```swift
-            let code = "示例代码"
-            ```
-            """
-        )
+    init(question: String, answer: String, thinking: String, type: String, timestamp: Date = Date(), isViewed: Bool = false) {
+        self.question = question
+        self.answer = answer
+        self.thinking = thinking
+        self.type = type
+        self.timestamp = timestamp
+        self.isViewed = isViewed
     }
 }
-#endif
 
