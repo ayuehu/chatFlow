@@ -49,8 +49,8 @@ struct CardView: View {
                     item.markdownContent
                         .textSelection(.enabled)
                 }
-                .padding(.horizontal, 24)  // 分开设置水平和垂直内边距
-                .padding(.vertical, 12)    // 减少垂直内边距
+                .padding(.horizontal, 30)  // 分开设置水平和垂直内边距
+                .padding(.vertical, 15)    // 减少垂直内边距
                 .frame(width: geometry.size.width)
                 .background(Color(hex: "#F7F8FC"))
             }

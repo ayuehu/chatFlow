@@ -30,27 +30,20 @@ struct ContentView: View {
                     if currentIndex > 0 {
                         CardView(item: items[shuffledIndices[currentIndex - 1]])
                             .offset(x: -UIScreen.main.bounds.width + offset)
-                            .scaleEffect(0.9)
-                            .opacity(offset > 0 ? 0.5 + (offset/UIScreen.main.bounds.width * 0.5) : 0)
+                            .opacity(offset > 0 ? offset/UIScreen.main.bounds.width : 0)
                     }
                     
                     // 当前卡片
                     if currentIndex >= 0 && currentIndex <= shuffledIndices.count - 1 {
                         CardView(item: items[shuffledIndices[currentIndex]])
                             .offset(x: offset)
-                            .scaleEffect(1.0 - abs(offset/(UIScreen.main.bounds.width * 2)))
-                            .rotation3DEffect(
-                                .degrees(Double(offset/UIScreen.main.bounds.width * 10)),
-                                axis: (x: 0, y: 1, z: 0)
-                            )
                     }
                     
                     // 下一张卡片（如果有）
                     if currentIndex < shuffledIndices.count - 1 {
                         CardView(item: items[shuffledIndices[currentIndex + 1]])
                             .offset(x: UIScreen.main.bounds.width + offset)
-                            .scaleEffect(0.9)
-                            .opacity(offset < 0 ? 0.5 + (abs(offset)/UIScreen.main.bounds.width * 0.5) : 0)
+                            .opacity(offset < 0 ? -offset/UIScreen.main.bounds.width : 0)
                     }
                 } else {
                     Text("加载中...")
@@ -69,7 +62,7 @@ struct ContentView: View {
                             .opacity(currentIndex > 0 ? 1 : 0.3)
                     }
                     .disabled(currentIndex == 0)
-                    .frame(width: 25, height: 25)
+                    .frame(width: 24, height: 24)
                     .background(Color.white.opacity(0.8))
                     .clipShape(Capsule())
                     .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
@@ -84,7 +77,7 @@ struct ContentView: View {
                             .opacity(currentIndex < shuffledIndices.count - 1 ? 1 : 0.3)
                     }
                     .disabled(currentIndex >= shuffledIndices.count - 1)
-                    .frame(width: 25, height: 25)
+                    .frame(width: 24, height: 24)
                     .background(Color.white.opacity(0.8))
                     .clipShape(Capsule())
                     .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
@@ -97,8 +90,8 @@ struct ContentView: View {
                         offset = gesture.translation.width
                     }
                     .onEnded { gesture in
-                        let threshold: CGFloat = 100
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        let threshold: CGFloat = 50
+                        withAnimation(.easeOut(duration: 0.2)) {  // 使用简单的缓出动画
                             if gesture.translation.width < -threshold && currentIndex < shuffledIndices.count - 1 {
                                 currentIndex += 1
                                 markAsViewed()
