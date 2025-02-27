@@ -4,61 +4,83 @@ import MarkdownUI
 struct CardView: View {
     let item: Item
     @State private var offset: CGSize = .zero
+    @State private var scrollProxy: ScrollViewProxy? = nil
     
     var body: some View {
         GeometryReader { geometry in
             ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
-                    // 问题部分
-                    Text(item.question)
-                        .font(.system(size: 21, weight: .semibold, design: .rounded))
-                        .lineSpacing(10)
-                        .tracking(0)
-                        .foregroundColor(Color(hex: "#2C2C36"))
-                        .padding(.top, 8)  // 减少顶部间距
-                        .padding(.bottom, 5)
-                    
-                    // 类型和字数信息
-                    HStack(spacing: 8) {
-                        if !item.type.isEmpty {
-                            Text("# \(item.type)")
+                ScrollViewReader { proxy in
+                    VStack(alignment: .leading, spacing: 12) {
+                        // 添加一个 ID 为顶部的空 View
+                        Color.clear
+                            .frame(height: 0)
+                            .id("top")
+                        
+                        // 问题部分
+                        Text(item.question)
+                            .font(.system(size: 21, weight: .semibold, design: .rounded))
+                            .lineSpacing(10)
+                            .tracking(0)
+                            .foregroundColor(Color(hex: "#2C2C36"))
+                            .padding(.top, 8)  // 减少顶部间距
+                            .padding(.bottom, 5)
+                        
+                        // 类型和字数信息
+                        HStack(spacing: 8) {
+                            if !item.type.isEmpty {
+                                Text("# \(item.type)")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(Color(hex: "#8F91A8"))
+                                    .tracking(0.2)
+                                    .lineSpacing(7)
+                            }
+                            
+                            Text(" | ")
+                                .font(.system(size: 13))
+                                .foregroundColor(Color(hex: "#8F91A8"))
+                            
+                            Text("\(item.answer.count)字")
                                 .font(.system(size: 13))
                                 .foregroundColor(Color(hex: "#8F91A8"))
                                 .tracking(0.2)
                                 .lineSpacing(7)
                         }
+                        .padding(.bottom, 5)
                         
-                        Text(" | ")
-                            .font(.system(size: 13))
-                            .foregroundColor(Color(hex: "#8F91A8"))
-                        
-                        Text("\(item.answer.count)字")
-                            .font(.system(size: 13))
-                            .foregroundColor(Color(hex: "#8F91A8"))
-                            .tracking(0.2)
-                            .lineSpacing(7)
-                    }
-                    .padding(.bottom, 5)
-                    
 //                    // 分割线
 //                    Divider()
 //                        .background(Color.gray.opacity(0.3))
 //                        .padding(.vertical, 5)
-                    
-                    // 答案部分
-                    item.markdownContent
-                        .textSelection(.enabled)
+                        
+                        // 答案部分
+                        item.markdownContent
+                            .textSelection(.enabled)
+                    }
+                    .padding(.horizontal, 30)  // 分开设置水平和垂直内边距
+                    .padding(.vertical, 15)    // 减少垂直内边距
+                    .frame(width: geometry.size.width)
+                    .background(Color(hex: "#F7F8FC"))
+                    .onAppear {
+                        scrollProxy = proxy
+                        // 在卡片出现时滚动到顶部
+                        withAnimation(.none) {
+                            proxy.scrollTo("top", anchor: .top)
+                        }
+                    }
                 }
-                .padding(.horizontal, 30)  // 分开设置水平和垂直内边距
-                .padding(.vertical, 15)    // 减少垂直内边距
-                .frame(width: geometry.size.width)
-                .background(Color(hex: "#F7F8FC"))
             }
+            .scrollIndicators(.hidden)  // 隐藏滚动条
             .offset(x: offset.width, y: offset.height)
         }
         .background(Color(hex: "#F7F8FC"))
         .safeAreaInset(edge: .top) {
             Color.clear.frame(height: 0)
+        }
+        // 在卡片切换时滚动到顶部
+        .onChange(of: item.id) { _ in
+            withAnimation(.none) {
+                scrollProxy?.scrollTo("top", anchor: .top)
+            }
         }
     }
 }

@@ -16,7 +16,7 @@ struct ContentView: View {
     @State private var offset: CGFloat = 0
     @State private var shuffledIndices: [Int] = [] // 存储随机打散的下标
     @State private var isDragging = false  // 添加拖动状态标记
-    
+
     var body: some View {
         NavigationView {
             ZStack {
