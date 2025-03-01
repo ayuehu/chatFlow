@@ -7,7 +7,7 @@ struct CardView: View {
     @State private var offset: CGSize = .zero
     @State private var scrollProxy: ScrollViewProxy? = nil
     @State private var showChat = false
-    @State private var chatMessages: [ChatMessage] = []  // 提升状态到卡片级别
+    @State private var chatMessages: [ChatMessage] = []
     @Environment(\.modelContext) private var modelContext
     
     var body: some View {
@@ -80,7 +80,6 @@ struct CardView: View {
                         withAnimation(.none) {
                             proxy.scrollTo("top", anchor: .top)
                         }
-                        loadChatHistory()  // 在卡片出现时加载聊天记录
                     }
                 }
             }
@@ -99,23 +98,15 @@ struct CardView: View {
                 )
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+                .onDisappear {
+                    // 在聊天窗口关闭时保存聊天记录
+                    saveChatHistory()
+                }
             }
         }
         .background(Color(hex: "#F7F8FC"))
         .safeAreaInset(edge: .top) {
             Color.clear.frame(height: 0)
-        }
-        // 在卡片切换时加载对应的聊天记录
-        .onChange(of: item.id) { _ in
-            withAnimation(.none) {
-                scrollProxy?.scrollTo("top", anchor: .top)
-            }
-            // 只加载新卡片的聊天记录，不清空历史
-            loadChatHistory()
-        }
-        .onAppear {
-            // 初始加载聊天记录
-            loadChatHistory()
         }
     }
     
@@ -134,10 +125,19 @@ struct CardView: View {
         
         do {
             chatMessages = try modelContext.fetch(descriptor)
-            print("当前卡片加载到 \(chatMessages.count) 条聊天记录")
+            print("当前卡片[\(questionString)]加载到 \(chatMessages.count) 条聊天记录")
         } catch {
             print("加载聊天记录失败: \(error)")
             chatMessages = []
+        }
+    }
+    
+    private func saveChatHistory() {
+        do {
+            try modelContext.save()
+            print("保存聊天记录成功，当前消息数: \(chatMessages.count)")
+        } catch {
+            print("保存聊天记录失败: \(error)")
         }
     }
 }
@@ -148,7 +148,7 @@ struct ChatInputView: View {
     var body: some View {
         HStack {
             Text("继续聊聊这个话题")
-                .font(.system(size: 13))
+                .font(.system(size: 18))
                 .lineSpacing(10)
                 .tracking(0)
                 .foregroundColor(Color(hex: "#585A73"))

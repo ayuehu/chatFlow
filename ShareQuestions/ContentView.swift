@@ -14,44 +14,36 @@ struct ContentView: View {
     @Query private var items: [Item]
     @State private var currentIndex = 0
     @State private var offset: CGFloat = 0
-    @State private var shuffledIndices: [Int] = [] // 存储随机打散的下标
-    @State private var isDragging = false  // 添加拖动状态标记
-
+    @State private var shuffledIndices: [Int] = []
+    @State private var isDragging = false
+    @State private var previousCardView: CardView?
+    @State private var nextCardView: CardView?
+    @State private var curCardView: CardView?
+    @State private var cache: [Int: CardView] = [:]
+    
     var body: some View {
         NavigationView {
             ZStack {
-                Text("")
-                    .onAppear {
-                        loadInitialData()
-                        print("数组长度-----: \(items.count)")
-                        print("index",currentIndex)
-                    }
                 if !items.isEmpty {
-                    // 上一张卡片（如果有）
-                    if currentIndex > 0 {
-                        CardView(item: items[shuffledIndices[currentIndex - 1]])
-                            .offset(x: -UIScreen.main.bounds.width + offset)
-                            .animation(.interactiveSpring(), value: offset)  // 添加弹性动画
-                    }
-                    
-                    // 当前卡片
-                    if currentIndex >= 0 && currentIndex <= shuffledIndices.count - 1 {
-                        CardView(item: items[shuffledIndices[currentIndex]])
-                            .offset(x: offset)
-                            .animation(.interactiveSpring(), value: offset)
-                    }
-                    
-                    // 下一张卡片（如果有）
-                    if currentIndex < shuffledIndices.count - 1 {
-                        CardView(item: items[shuffledIndices[currentIndex + 1]])
-                            .offset(x: UIScreen.main.bounds.width + offset)
-                            .animation(.interactiveSpring(), value: offset)
-                    }
-                } else {
-                    Text("加载中...")
-                        .onAppear {
-//                            loadInitialData()
+                    if currentIndex >= 0 && currentIndex < shuffledIndices.count {
+                        // 上一张卡片（如果有）
+                        if currentIndex > 0 {
+                            previousCardView?
+                                .offset(x: -UIScreen.main.bounds.width + offset)
                         }
+                        
+                        // 当前卡片（同步加载）
+//                        CardView(item: items[shuffledIndices[currentIndex]])
+                        curCardView
+                            .offset(x: offset)
+                            .id(currentIndex) // 确保视图正确更新
+                        
+                        // 下一张卡片（如果有）
+                        if currentIndex < shuffledIndices.count - 1 {
+                            nextCardView?
+                                .offset(x: UIScreen.main.bounds.width + offset)
+                        }
+                    }
                 }
                 
                 // 导航按钮
@@ -107,6 +99,7 @@ struct ContentView: View {
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                                     currentIndex += 1
                                     markAsViewed()
+                                    saveContext()
                                     withAnimation(.none) {
                                         offset = 0
                                     }
@@ -116,6 +109,7 @@ struct ContentView: View {
                                 offset = screenWidth
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                                     currentIndex -= 1
+                                    saveContext()
                                     withAnimation(.none) {
                                         offset = 0
                                     }
@@ -126,7 +120,23 @@ struct ContentView: View {
                         }
                     }
             )
+            .onAppear {
+                loadInitialData()
+                print("数组长度-----: \(items.count)")
+                print("index",currentIndex)
+                loadCurCards(for: currentIndex)
+            }
             .ignoresSafeArea(edges: .bottom)
+            .onChange(of: currentIndex) { oldValue, newValue in
+                loadCurCards(for: currentIndex)
+                Task {
+                    await loadAdjacentCards(for: newValue)
+                }
+            }
+            .task {
+                // 初始加载相邻卡片
+                await loadAdjacentCards(for: currentIndex)
+            }
         }
     }
     
@@ -138,6 +148,7 @@ struct ContentView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             if currentIndex > 0 {
                 currentIndex -= 1
+                saveContext()
                 withAnimation(.none) {
                     offset = 0
                 }
@@ -150,6 +161,7 @@ struct ContentView: View {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
             offset = -screenWidth
         }
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             if currentIndex < shuffledIndices.count - 1 {
                 currentIndex += 1
@@ -161,6 +173,7 @@ struct ContentView: View {
             }
         }
     }
+
     
     private func markAsViewed() {
         items[shuffledIndices[currentIndex]].isViewed = true
@@ -172,6 +185,7 @@ struct ContentView: View {
             try modelContext.delete(model: Item.self)
             try modelContext.save()
             print("Successfully purged all data")
+            print(items.count)
         } catch {
             print("Failed to purge data: \(error)")
         }
@@ -187,7 +201,6 @@ struct ContentView: View {
     
     private func loadInitialData() {
 //        purgeAllData() // 调试阶段启用
-        
         // 只在数据为空时加载预设数据
         if items.isEmpty {
             // 获取 Bundle 中 Data 文件夹的 URL
@@ -210,10 +223,6 @@ struct ContentView: View {
                         if !questions.isEmpty {
                             for question in questions {
                                 modelContext.insert(question)
-//                                print("question", question.question)
-//                                print("answer", question.answer)
-//                                print("thinking", question.thinking)
-//                                print("type", question.type)
                             }
                             print("成功加载 \(questions.count) 个问题")
                         }
@@ -230,18 +239,39 @@ struct ContentView: View {
                 loadFallbackData()
             }
         }
-        // 获取未浏览的 Item 下标
-        print("数组长度: \(items.count)")
-        let unviewedIndices = items.enumerated().compactMap { index, item in
-            item.isViewed ? nil : index
-        }
-        print("unviewedIndices数组长度: \(unviewedIndices.count)")
-        // 随机打散下标
-        shuffledIndices = unviewedIndices.shuffled()
-        print("shuffledIndices数组长度: \(unviewedIndices.count)")
-        // 加载数据
-        for index in shuffledIndices {
-            modelContext.insert(items[index])
+        // 确保只初始化一次
+        if shuffledIndices.isEmpty {
+            print("开始加载未浏览的卡片")
+            
+            // 获取未浏览的 Item 下标
+            let unviewedIndices = items.enumerated().compactMap { index, item in
+                item.isViewed ? nil : index
+            }
+            
+            print("总卡片数: \(items.count), 未浏览卡片数: \(unviewedIndices.count)")
+            
+            // 如果有未浏览的卡片，随机打散它们的顺序
+            if !unviewedIndices.isEmpty {
+                shuffledIndices = unviewedIndices.shuffled()
+                currentIndex = 0
+                print("已加载 \(shuffledIndices.count) 张未浏览的卡片")
+            } else {
+                // 如果所有卡片都已浏览过，可以选择：
+                // 1. 重置所有卡片的浏览状态
+                // 2. 显示完成提示
+                // 3. 重新加载所有卡片
+                
+                // 这里选择重新加载所有卡片
+                shuffledIndices = Array(0..<items.count).shuffled()
+                currentIndex = 0
+                
+                // 重置所有卡片的浏览状态
+                for index in 0..<items.count {
+                    items[index].isViewed = false
+                }
+                saveContext()
+                print("所有卡片已浏览完，重新开始")
+            }
         }
     }
     
@@ -251,6 +281,56 @@ struct ContentView: View {
             modelContext.insert(question)
         }
         print("已加载预设数据")
+    }
+    
+    private func getCard(for index: Int, item: Item) -> CardView {
+        if let cachedCard = cache[index] {
+            print("获取缓存卡片: \(item.question)")
+            return cachedCard
+        }
+        print("创建新卡片: \(item.question)")
+        let newCard = CardView(item: item)
+        cache[index] = newCard
+        return newCard
+    }
+
+    private func loadCurCards(for index: Int) {
+        // 确保索引有效
+        guard index >= 0 && index < shuffledIndices.count else {
+            print("无效的索引: \(index)")
+            return
+        }
+        
+        let curIndex = shuffledIndices[index]
+        print("加载当前卡片, index: \(curIndex), 问题: \(items[curIndex].question)")
+        
+        // 更新当前卡片
+        curCardView = getCard(for: curIndex, item: items[curIndex])
+    }
+    
+    private func loadAdjacentCards(for index: Int) async {
+        guard index >= 0 && index < shuffledIndices.count else {
+            print("无效的索引: \(index)")
+            return
+        }
+        
+        // 加载上一张卡片
+        if index > 0 {
+            let prevIndex = shuffledIndices[index - 1]
+            previousCardView = getCard(for: prevIndex, item: items[prevIndex])
+            print("加载上一张卡片: \(items[prevIndex].question)")
+        } else {
+            previousCardView = nil
+        }
+        
+        // 加载下一张卡片
+        if index < shuffledIndices.count - 1 {
+            let nextIndex = shuffledIndices[index + 1]
+            nextCardView = getCard(for: nextIndex, item: items[nextIndex])
+            print("加载下一张卡片: \(items[nextIndex].question)")
+        } else {
+            nextCardView = nil
+        }
     }
 }
 

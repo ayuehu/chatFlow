@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import MarkdownUI
 
 struct ChatView: View {
     @Binding var isPresented: Bool
@@ -71,7 +72,7 @@ struct ChatView: View {
             .padding()
             .background(Color(.secondarySystemBackground))
             .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     isInputFocused = true
                 }
             }
@@ -89,14 +90,99 @@ struct ChatView: View {
                     .foregroundColor(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
-                Text(message.content)
-                    .padding()
-                    .background(Color(.systemGray5))
-                    .foregroundColor(.primary)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                ScrollView {  // 添加 ScrollView 确保内容可以滚动
+                    Markdown(message.content)
+                        .markdownTheme(theme)
+                        .lineSpacing(9)
+                        .kerning(0.2)
+                        .fixedSize(horizontal: false, vertical: true)
+//                        .frame(maxWidth: .infinity, alignment: .leading)  // 确保文本可以占满宽度
+                }
+                .padding()
+                .background(Color(.systemGray5))
+                .foregroundColor(.primary)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 Spacer()
             }
         }
+    }
+    
+    // Markdown 主题
+    var theme: Theme {
+        Theme()
+            .text {
+                FontFamily(.system())  // PingFang SC 使用系统字体
+                FontSize(.em(0.9375))  // 15px
+                FontWeight(.regular)    // normal
+                ForegroundColor(Color(hex: "#585A73"))
+            }
+            .heading1 { configuration in
+                VStack(alignment: .leading, spacing: 8) {
+                    configuration.label
+                        .fontWeight(.bold)
+                        .font(.system(size: 28))
+                    Divider()
+                }
+            }
+            .heading2 { configuration in
+                configuration.label
+                    .fontWeight(.bold)
+                    .font(.system(size: 24))
+            }
+            .heading3 { configuration in
+                configuration.label
+                    .fontWeight(.bold)
+                    .font(.system(size: 20))
+            }
+            .strong {
+                FontWeight(.bold)
+                FontFamily(.system())
+                ForegroundColor(Color(hex: "#585A73"))
+            }
+            .link {
+                ForegroundColor(.blue)
+            }
+//            .listItem { configuration in
+//                HStack(alignment: .firstTextBaseline) {
+//                    Text("•").foregroundColor(.secondary)
+//                    configuration.label
+//                }
+//            }
+            .codeBlock { configuration in
+                configuration.label
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(8)
+            }
+            .paragraph { configuration in
+                configuration.label
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(nil)  // 允许多行
+                    .padding(.vertical, 4)
+                    .frame(maxWidth: .infinity, alignment: .leading)  // 确保文本可以占满宽度
+            }
+            .blockquote { configuration in
+                configuration.label
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(nil)
+                    .padding(.leading, 16)
+            }
+            .table { configuration in
+                VStack(alignment: .leading, spacing: 8) {
+                    configuration.label
+                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(nil)
+                        .padding(.vertical, 4)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .tableCell { configuration in
+                configuration.label
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(nil)
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
+            }
     }
     
     private func sendMessage() {
@@ -153,6 +239,7 @@ struct ChatView: View {
                 }
             }
         }
+        print("history message length", history.count)
     }
     
     private func scrollToBottom(proxy: ScrollViewProxy) {
