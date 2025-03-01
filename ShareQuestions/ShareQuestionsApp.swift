@@ -13,6 +13,7 @@ struct ShareQuestionsApp: App {
     let container: ModelContainer = {
         let schema = Schema([
             Item.self,
+            ChatMessage.self  // 添加ChatMessage模型
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

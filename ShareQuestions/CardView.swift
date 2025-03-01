@@ -1,10 +1,14 @@
 import SwiftUI
 import MarkdownUI
+import SwiftData
 
 struct CardView: View {
     let item: Item
     @State private var offset: CGSize = .zero
     @State private var scrollProxy: ScrollViewProxy? = nil
+    @State private var showChat = false
+    @State private var chatMessages: [ChatMessage] = []  // 提升状态到卡片级别
+    @Environment(\.modelContext) private var modelContext
     
     var body: some View {
         GeometryReader { geometry in
@@ -27,6 +31,16 @@ struct CardView: View {
                         
                         // 类型和字数信息
                         HStack(spacing: 8) {
+                            Text("@DeepSeek")
+                                .font(.system(size: 13))
+                                .foregroundColor(Color(hex: "#8F91A8"))
+                                .tracking(0.2)
+                                .lineSpacing(7)
+                            
+                            Text(" | ")
+                                .font(.system(size: 13))
+                                .foregroundColor(Color(hex: "#8F91A8"))
+                            
                             if !item.type.isEmpty {
                                 Text("# \(item.type)")
                                     .font(.system(size: 13))
@@ -66,21 +80,88 @@ struct CardView: View {
                         withAnimation(.none) {
                             proxy.scrollTo("top", anchor: .top)
                         }
+                        loadChatHistory()  // 在卡片出现时加载聊天记录
                     }
                 }
             }
             .scrollIndicators(.hidden)  // 隐藏滚动条
             .offset(x: offset.width, y: offset.height)
+            .overlay(alignment: .bottom) {
+                ChatInputView(showChat: $showChat)
+                    .padding(.bottom, 20)
+            }
+            .sheet(isPresented: $showChat) {
+                ChatView(
+                    isPresented: $showChat,
+                    messages: $chatMessages,
+                    currentQuestion: item.question,
+                    currentAnswer: item.answer
+                )
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+            }
         }
         .background(Color(hex: "#F7F8FC"))
         .safeAreaInset(edge: .top) {
             Color.clear.frame(height: 0)
         }
-        // 在卡片切换时滚动到顶部
+        // 在卡片切换时加载对应的聊天记录
         .onChange(of: item.id) { _ in
             withAnimation(.none) {
                 scrollProxy?.scrollTo("top", anchor: .top)
             }
+            // 只加载新卡片的聊天记录，不清空历史
+            loadChatHistory()
+        }
+        .onAppear {
+            // 初始加载聊天记录
+            loadChatHistory()
+        }
+    }
+    
+    private func loadChatHistory() {
+        let questionString = item.question
+        print("正在加载问题的聊天记录: \(questionString)")
+        
+        let predicate = #Predicate<ChatMessage> { message in
+            message.relatedQuestion == questionString
+        }
+        
+        let descriptor = FetchDescriptor<ChatMessage>(
+            predicate: predicate,
+            sortBy: [SortDescriptor<ChatMessage>(\.timestamp, order: .forward)]
+        )
+        
+        do {
+            chatMessages = try modelContext.fetch(descriptor)
+            print("当前卡片加载到 \(chatMessages.count) 条聊天记录")
+        } catch {
+            print("加载聊天记录失败: \(error)")
+            chatMessages = []
+        }
+    }
+}
+
+struct ChatInputView: View {
+    @Binding var showChat: Bool
+    
+    var body: some View {
+        HStack {
+            Text("继续聊聊这个话题")
+                .font(.system(size: 13))
+                .lineSpacing(10)
+                .tracking(0)
+                .foregroundColor(Color(hex: "#585A73"))
+            Spacer()
+            Image(systemName: "chevron.up")
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(radius: 2)
+        .padding(.horizontal)
+        .onTapGesture {
+            showChat = true
         }
     }
 }
