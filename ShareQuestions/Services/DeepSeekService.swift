@@ -56,7 +56,7 @@ class DeepSeekService {
             "model": "Pro/deepseek-ai/DeepSeek-V3",
             "messages": messages,
             "stream": true,
-            "max_tokens": 512,
+            "max_tokens": 1024,
             "stop": ["null"],
             "temperature": 0.6,
             "top_p": 0.95,
@@ -102,7 +102,12 @@ class DeepSeekService {
     func buildMessages(question: String, answer: String, history: [ChatMessage]) -> [[String: String]] {
         var messages = [[String: String]]()
         
-        // 添加系统消息（卡片问题）
+        // 添加系统消息（卡片问题
+        messages.append([
+            "role": "system",
+            "content": "请简短回答，避免复杂结构，如果要分点回答，请小于两个，口语化一些"
+        ])
+        //"请简短回答，避免分3个以上的点，避免复杂结构，口语化一些"  "针对用户问题的回复尽量简短，保持在256字以内，避免使用复杂的markdown格式。"
         messages.append([
             "role": "user",
             "content": "\(question)"

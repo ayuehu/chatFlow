@@ -96,7 +96,7 @@ struct CardView: View {
                     currentQuestion: item.question,
                     currentAnswer: item.answer
                 )
-                .presentationDetents([.medium, .large])
+                .presentationDetents([.fraction(0.75), .large])
                 .presentationDragIndicator(.visible)
                 .onDisappear {
                     // 在聊天窗口关闭时保存聊天记录
@@ -146,22 +146,41 @@ struct ChatInputView: View {
     @Binding var showChat: Bool
     
     var body: some View {
-        HStack {
-            Text("继续聊聊这个话题")
-                .font(.system(size: 18))
-                .lineSpacing(10)
-                .tracking(0)
-                .foregroundColor(Color(hex: "#585A73"))
-            Spacer()
-            Image(systemName: "chevron.up")
-        }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(radius: 2)
-        .padding(.horizontal)
-        .onTapGesture {
-            showChat = true
+        GeometryReader { geometry in
+            HStack(spacing: 12) {
+                Text("继续聊这个话题")
+                    .font(.system(size: 16))
+                    .foregroundColor(Color(hex: "#8F91A8"))
+                
+                Spacer()
+                
+                Image(systemName: "chevron.up")
+                    .foregroundColor(Color(hex: "#585A73"))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8) // 增加垂直内边距
+            .frame(
+                width: geometry.size.width * 0.9, // 屏幕宽度的80%
+                height: 46 // 增加高度
+            )
+            .background(Color.white)
+            .clipShape(Capsule())
+            .shadow(
+                color: Color.black.opacity(0.02),
+                radius: 2,
+                x: 0,
+                y: 2
+            )
+            .shadow(
+                color: Color.black.opacity(0.02),
+                radius: 2,
+                x: 0,
+                y: -1
+            )
+            .position(x: geometry.size.width / 2, y: geometry.size.height * 0.97)
+            .onTapGesture {
+                showChat = true
+            }
         }
     }
 }

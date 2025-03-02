@@ -17,18 +17,21 @@ struct ChatView: View {
             // 标题栏
             HStack {
                 Text("针对当前内容，你想问我点什么？")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 16))
+                    .foregroundColor(Color(hex: "#585A73"))
                 Spacer()
                 Button(action: {
+                    isInputFocused = false
                     isPresented = false
-                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                 }) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color(hex: "#8F91A8"))
                 }
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.top, 24)
+            .padding(.bottom, 12)
             .background(Color(.systemBackground))
             
             // 消息列表
@@ -50,34 +53,58 @@ struct ChatView: View {
             }
             
             // 输入区域
-            HStack {
-                TextField("继续聊聊这个话题", text: $newMessage, axis: .vertical)
-                    .focused($isInputFocused)
-                    .textFieldStyle(.roundedBorder)
-                    .padding(.leading, 8)
-                    .keyboardType(.default)
-                    .textContentType(.none)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.sentences)
-                
-                Button(action: sendMessage) {
-                    Image(systemName: "paperplane.fill")
-                        .padding(8)
-                        .background(isLoading ? Color.gray : Color.blue)
-                        .foregroundColor(.white)
-                        .clipShape(Circle())
+            GeometryReader { geometry in
+                HStack(spacing: 12) {
+                    TextField("继续聊这个话题", text: $newMessage, axis: .vertical)
+                        .focused($isInputFocused)
+                        .font(.system(size: 16))
+                        .foregroundColor(Color(hex: "#8F91A8"))
+                        .padding(.vertical, 8)
+                    
+                    if !newMessage.isEmpty {
+                        Button(action: {
+                            sendMessage()
+                            isInputFocused = false // 发送后收起键盘
+                        }) {
+                            Image(systemName: "paperplane.fill")
+                                .foregroundColor(.white)
+                                .frame(width: 30, height: 30)
+                                .background(isLoading ? Color.gray : Color.blue)
+                                .clipShape(Circle())
+                        }
+                        .disabled(isLoading)
+                    }
                 }
-                .disabled(newMessage.isEmpty || isLoading)
+                .padding(.horizontal, 16)
+                .frame(width: geometry.size.width * 0.9, height: 46)
+                .background(Color.white)
+                .clipShape(Capsule())
+                .shadow(
+                    color: Color.black.opacity(0.02),
+                    radius: 2,
+                    x: 0,
+                    y: 2
+                )
+                .shadow(
+                    color: Color.black.opacity(0.02),
+                    radius: 2,
+                    x: 0,
+                    y: -1
+                )
+                .position(x: geometry.size.width / 2, y: geometry.size.height * 0.97)
             }
-            .padding()
-            .background(Color(.secondarySystemBackground))
-            .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    isInputFocused = true
-                }
-            }
+            .frame(height: 60)
+            .padding(.bottom)
         }
         .background(Color(.systemBackground))
+        .presentationDetents([.fraction(0.67), .large])
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(30)
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isInputFocused = true
+            }
+        }
     }
     
     private func MessageBubble(message: ChatMessage) -> some View {
@@ -86,8 +113,8 @@ struct ChatView: View {
                 Spacer()
                 Text(message.content)
                     .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
+                    .background(Color(hex: "#EDEDF3"))
+                    .foregroundColor(.primary)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
                 ScrollView {  // 添加 ScrollView 确保内容可以滚动
@@ -99,7 +126,7 @@ struct ChatView: View {
 //                        .frame(maxWidth: .infinity, alignment: .leading)  // 确保文本可以占满宽度
                 }
                 .padding()
-                .background(Color(.systemGray5))
+                .background(Color(.white))
                 .foregroundColor(.primary)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 Spacer()
