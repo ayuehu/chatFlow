@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		51024C322D772D820041270B /* LeanCloud in Frameworks */ = {isa = PBXBuildFile; productRef = 51024C312D772D820041270B /* LeanCloud */; };
 		518BFABE2D6B1B3000ED5A20 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 518BFABD2D6B1B3000ED5A20 /* MarkdownUI */; };
 		518BFAD32D6E247E00ED5A20 /* Data in Resources */ = {isa = PBXBuildFile; fileRef = 518BFAD22D6E247E00ED5A20 /* Data */; };
 /* End PBXBuildFile section */
@@ -58,6 +59,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				51024C322D772D820041270B /* LeanCloud in Frameworks */,
 				518BFABE2D6B1B3000ED5A20 /* MarkdownUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -129,6 +131,7 @@
 			name = ShareQuestions;
 			packageProductDependencies = (
 				518BFABD2D6B1B3000ED5A20 /* MarkdownUI */,
+				51024C312D772D820041270B /* LeanCloud */,
 			);
 			productName = ShareQuestions;
 			productReference = 518BFA882D6A68D100ED5A20 /* ShareQuestions.app */;
@@ -214,6 +217,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				518BFABB2D6B193800ED5A20 /* XCRemoteSwiftPackageReference "MarkdownUI" */,
+				51024C302D772AC00041270B /* XCRemoteSwiftPackageReference "swift-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 518BFA892D6A68D100ED5A20 /* Products */;
@@ -596,6 +600,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		51024C302D772AC00041270B /* XCRemoteSwiftPackageReference "swift-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/leancloud/swift-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 17.11.0;
+			};
+		};
 		518BFABB2D6B193800ED5A20 /* XCRemoteSwiftPackageReference "MarkdownUI" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/gonzalezreal/MarkdownUI";
@@ -607,6 +619,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		51024C312D772D820041270B /* LeanCloud */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 51024C302D772AC00041270B /* XCRemoteSwiftPackageReference "swift-sdk" */;
+			productName = LeanCloud;
+		};
 		518BFABD2D6B1B3000ED5A20 /* MarkdownUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 518BFABB2D6B193800ED5A20 /* XCRemoteSwiftPackageReference "MarkdownUI" */;

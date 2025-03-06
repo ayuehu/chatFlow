@@ -18,6 +18,7 @@ final class Item {
     var type: String = ""
     var timestamp: Date
     var isViewed: Bool
+    var isLiked: Bool = false
     
     // Markdown 主题
     var theme: Theme {

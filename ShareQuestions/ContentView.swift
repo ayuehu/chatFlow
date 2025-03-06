@@ -20,7 +20,9 @@ struct ContentView: View {
     @State private var nextCardView: CardView?
     @State private var curCardView: CardView?
     @State private var cache: [Int: CardView] = [:]
-    
+    @StateObject private var authManager = AuthManager.shared
+    @State private var showingLogoutAlert = false
+
     var body: some View {
         NavigationView {
             ZStack {
@@ -47,36 +49,63 @@ struct ContentView: View {
                 }
                 
                 // 导航按钮
-                HStack {
-                    // 左箭头按钮
-                    Button(action: previousCard) {
-                        Image(systemName: "chevron.backward.2")
-                            .font(.system(size: 16))
-                            .foregroundColor(.gray)
-                            .opacity(currentIndex > 0 ? 1 : 0.3)
+                VStack {
+                    // 顶部工具栏
+                    HStack {
+                        Spacer()
+                        
+                        // 退出登录按钮
+                        Button {
+                            showingLogoutAlert = true
+                        } label: {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .font(.system(size: 10))
+                                .foregroundColor(.gray)
+                                .padding(8)
+                                .background(Color.white.opacity(0.8))
+                                .clipShape(Circle())
+                                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        }
                     }
-                    .disabled(currentIndex == 0)
-                    .frame(width: 24, height: 24)
-                    .background(Color.white.opacity(0.8))
-                    .clipShape(Capsule())
-                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    .padding(.horizontal, 10)
+                    .padding(.top, 4) // 增加顶部间距，避免遮挡标题
                     
                     Spacer()
                     
-                    // 右箭头按钮
-                    Button(action: nextCard) {
-                        Image(systemName: "chevron.forward.2")
-                            .font(.system(size: 16))
-                            .foregroundColor(.gray)
-                            .opacity(currentIndex < shuffledIndices.count - 1 ? 1 : 0.3)
+                    // 左右滑动按钮放在页面中间
+                    HStack {
+                        // 左箭头按钮
+                        Button(action: previousCard) {
+                            Image(systemName: "chevron.backward.2")
+                                .font(.system(size: 16))
+                                .foregroundColor(.gray)
+                                .opacity(currentIndex > 0 ? 1 : 0.3)
+                        }
+                        .disabled(currentIndex == 0)
+                        .frame(width: 24, height: 24)
+                        .background(Color.white.opacity(0.8))
+                        .clipShape(Capsule())
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        
+                        Spacer()
+                        
+                        // 右箭头按钮
+                        Button(action: nextCard) {
+                            Image(systemName: "chevron.forward.2")
+                                .font(.system(size: 16))
+                                .foregroundColor(.gray)
+                                .opacity(currentIndex < shuffledIndices.count - 1 ? 1 : 0.3)
+                        }
+                        .disabled(currentIndex >= shuffledIndices.count - 1)
+                        .frame(width: 24, height: 24)
+                        .background(Color.white.opacity(0.8))
+                        .clipShape(Capsule())
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     }
-                    .disabled(currentIndex >= shuffledIndices.count - 1)
-                    .frame(width: 24, height: 24)
-                    .background(Color.white.opacity(0.8))
-                    .clipShape(Capsule())
-                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    .padding(.horizontal, 10)
+                    
+                    Spacer()
                 }
-                .padding(.horizontal, 12)
             }
             .gesture(
                 DragGesture()
@@ -109,6 +138,7 @@ struct ContentView: View {
                                 offset = screenWidth
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                                     currentIndex -= 1
+                                    markAsViewed()
                                     saveContext()
                                     withAnimation(.none) {
                                         offset = 0
@@ -136,6 +166,15 @@ struct ContentView: View {
             .task {
                 // 初始加载相邻卡片
                 await loadAdjacentCards(for: currentIndex)
+            }
+            .navigationBarHidden(true)
+            .alert("确认退出登录", isPresented: $showingLogoutAlert) {
+                Button("取消", role: .cancel) { }
+                Button("退出登录", role: .destructive) {
+                    authManager.logout()
+                }
+            } message: {
+                Text("您确定要退出登录吗？")
             }
         }
     }

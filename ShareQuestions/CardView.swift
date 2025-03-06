@@ -1,14 +1,17 @@
 import SwiftUI
 import MarkdownUI
 import SwiftData
+import UIKit
+import Observation
 
 struct CardView: View {
-    let item: Item
+    @Bindable var item: Item
     @State private var offset: CGSize = .zero
     @State private var scrollProxy: ScrollViewProxy? = nil
     @State private var showChat = false
     @State private var chatMessages: [ChatMessage] = []
     @Environment(\.modelContext) private var modelContext
+    @State private var showLikeAnimation: Bool = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -61,11 +64,6 @@ struct CardView: View {
                         }
                         .padding(.bottom, 5)
                         
-//                    // 分割线
-//                    Divider()
-//                        .background(Color.gray.opacity(0.3))
-//                        .padding(.vertical, 5)
-                        
                         // 答案部分
                         item.markdownContent
                             .textSelection(.enabled)
@@ -80,14 +78,118 @@ struct CardView: View {
                         withAnimation(.none) {
                             proxy.scrollTo("top", anchor: .top)
                         }
+                        // 加载聊天历史记录
+                        loadChatHistory()
                     }
                 }
             }
             .scrollIndicators(.hidden)  // 隐藏滚动条
             .offset(x: offset.width, y: offset.height)
+//            .safeAreaInset(bottom: 80) // 为底部工具栏预留空间
             .overlay(alignment: .bottom) {
-                ChatInputView(showChat: $showChat)
-                    .padding(.bottom, 20)
+                // 底部工具栏
+                HStack(spacing: 12) {
+                    // 聊天输入框
+                    Button {
+                        showChat = true
+                    } label: {
+                        HStack(spacing: 14) {
+                            Text("继续聊这个话题")
+                                .font(.system(size: 16))
+                                .foregroundColor(Color(hex: "#8F91A8"))
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.up")
+                                .foregroundColor(Color(hex: "#585A73"))
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .frame(height: 46)
+                        .background(Color.white)
+                        .clipShape(Capsule())
+                        .shadow(
+                            color: Color.black.opacity(0.02),
+                            radius: 2,
+                            x: 0,
+                            y: 2
+                        )
+                    }
+                    .frame(width: geometry.size.width * 0.6)
+                    
+                    // 点赞按钮
+                    Button {
+                        toggleLike()
+                    } label: {
+                        ZStack {
+                            Capsule()
+                                .fill(Color.white)
+                                .frame(width: 46, height: 46)
+                                .shadow(
+                                    color: Color.black.opacity(0.05),
+                                    radius: 4,
+                                    x: 0,
+                                    y: 2
+                                )
+                            
+                            // 主爱心图标
+                            Image(systemName: item.isLiked ? "heart.fill" : "heart")
+                                .font(.system(size: 22))
+                                .foregroundColor(item.isLiked ? Color(hex: "#4E4FEB") : Color(hex: "#8F91A8"))
+                                .scaleEffect(showLikeAnimation ? 1.3 : 1.0)
+                                .animation(showLikeAnimation ? 
+                                          Animation.spring(response: 0.3, dampingFraction: 0.6).repeatCount(1, autoreverses: true) : 
+                                          .default, 
+                                          value: showLikeAnimation)
+                            
+                            // 点赞动画
+                            if showLikeAnimation {
+                                ZStack {
+                                    // 白色星星向上漂浮动画
+                                    ForEach(0..<12) { i in
+                                        Image(systemName: "star.fill")
+                                            .font(.system(size: CGFloat.random(in: 8...14)))
+                                            .foregroundColor(.white)
+                                            .offset(
+                                                x: CGFloat.random(in: -30...30),
+                                                y: CGFloat.random(in: -60...0)
+                                            )
+                                            .rotationEffect(.degrees(Double.random(in: 0...360)))
+                                            .opacity(Double.random(in: 0.5...1.0))
+                                            .animation(
+                                                Animation.easeOut(duration: 1.0)
+                                                    .delay(Double.random(in: 0...0.3))
+                                                    .speed(Double.random(in: 0.7...1.3)),
+                                                value: showLikeAnimation
+                                            )
+                                    }
+                                    
+                                    // 小爱心向上漂浮动画
+                                    ForEach(0..<5) { i in
+                                        Image(systemName: "heart.fill")
+                                            .font(.system(size: CGFloat.random(in: 6...10)))
+                                            .foregroundColor(Color(hex: "#4E4FEB").opacity(0.8))
+                                            .offset(
+                                                x: CGFloat.random(in: -20...20),
+                                                y: CGFloat.random(in: -50...0)
+                                            )
+                                            .rotationEffect(.degrees(Double.random(in: -30...30)))
+                                            .opacity(Double.random(in: 0.6...1.0))
+                                            .animation(
+                                                Animation.easeOut(duration: 1.2)
+                                                    .delay(Double.random(in: 0...0.2))
+                                                    .speed(Double.random(in: 0.8...1.2)),
+                                                value: showLikeAnimation
+                                            )
+                                    }
+                                }
+                                .opacity(showLikeAnimation ? 1 : 0)
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 20)
             }
             .sheet(isPresented: $showChat) {
                 ChatView(
@@ -107,6 +209,35 @@ struct CardView: View {
         .background(Color(hex: "#F7F8FC"))
         .safeAreaInset(edge: .top) {
             Color.clear.frame(height: 0)
+        }
+    }
+    
+    // 切换点赞状态
+    private func toggleLike() {
+        // 添加触感反馈
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.prepare()
+        generator.impactOccurred()
+        
+        // 直接修改item的isLiked属性
+        item.isLiked.toggle()
+        
+        // 保存点赞状态
+        do {
+            try modelContext.save()
+            print("点赞状态已保存")
+        } catch {
+            print("保存点赞状态失败: \(error)")
+        }
+        
+        // 如果是点赞操作，显示动画
+        if item.isLiked {
+            showLikeAnimation = true
+            
+            // 1.5秒后隐藏动画
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                showLikeAnimation = false
+            }
         }
     }
     
@@ -138,49 +269,6 @@ struct CardView: View {
             print("保存聊天记录成功，当前消息数: \(chatMessages.count)")
         } catch {
             print("保存聊天记录失败: \(error)")
-        }
-    }
-}
-
-struct ChatInputView: View {
-    @Binding var showChat: Bool
-    
-    var body: some View {
-        GeometryReader { geometry in
-            HStack(spacing: 12) {
-                Text("继续聊这个话题")
-                    .font(.system(size: 16))
-                    .foregroundColor(Color(hex: "#8F91A8"))
-                
-                Spacer()
-                
-                Image(systemName: "chevron.up")
-                    .foregroundColor(Color(hex: "#585A73"))
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8) // 增加垂直内边距
-            .frame(
-                width: geometry.size.width * 0.9, // 屏幕宽度的80%
-                height: 46 // 增加高度
-            )
-            .background(Color.white)
-            .clipShape(Capsule())
-            .shadow(
-                color: Color.black.opacity(0.02),
-                radius: 2,
-                x: 0,
-                y: 2
-            )
-            .shadow(
-                color: Color.black.opacity(0.02),
-                radius: 2,
-                x: 0,
-                y: -1
-            )
-            .position(x: geometry.size.width / 2, y: geometry.size.height * 0.97)
-            .onTapGesture {
-                showChat = true
-            }
         }
     }
 }
