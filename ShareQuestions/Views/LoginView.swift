@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct LoginView: View {
+    @Environment(\.presentationMode) var presentationMode
     @StateObject private var authManager = AuthManager.shared
     @State private var identifier: String = ""
     @State private var password: String = ""
@@ -70,6 +71,13 @@ struct LoginView: View {
                         Button {
                             Task {
                                 await authManager.login(identifier: identifier, password: password)
+                                
+                                // 登录成功后自动关闭浮层
+                                if authManager.isAuthenticated {
+                                    DispatchQueue.main.async {
+                                        presentationMode.wrappedValue.dismiss()
+                                    }
+                                }
                             }
                         } label: {
                             Text("登录")
@@ -77,7 +85,7 @@ struct LoginView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color(hex: "#407FFD"))
+                                .background(Color(hex: "#000000"))
                                 .cornerRadius(10)
                         }
                         .disabled(identifier.isEmpty || password.isEmpty || authManager.isLoading)
@@ -89,7 +97,7 @@ struct LoginView: View {
                         } label: {
                             Text("没有账号？立即注册")
                                 .font(.system(size: 16))
-                                .foregroundColor(Color(hex: "#407FFD"))
+                                .foregroundColor(Color(hex: "#C8CAD9"))
                         }
                     }
                     .padding(.horizontal, 30)
@@ -117,6 +125,13 @@ struct LoginView: View {
                 // 自动聚焦到用户名/邮箱输入框
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     isIdentifierFocused = true
+                }
+            }
+            // 监听登录状态变化
+            .onChange(of: authManager.isAuthenticated) { _, newValue in
+                if newValue {
+                    // 登录成功，关闭浮层
+                    presentationMode.wrappedValue.dismiss()
                 }
             }
         }

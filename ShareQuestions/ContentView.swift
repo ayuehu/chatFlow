@@ -22,6 +22,7 @@ struct ContentView: View {
     @State private var cache: [Int: CardView] = [:]
     @StateObject private var authManager = AuthManager.shared
     @State private var showingLogoutAlert = false
+    @State private var showingLoginSheet = false
 
     var body: some View {
         NavigationView {
@@ -54,21 +55,27 @@ struct ContentView: View {
                     HStack {
                         Spacer()
                         
-                        // 退出登录按钮
+                        // 根据登录状态显示不同的图标
                         Button {
-                            showingLogoutAlert = true
+                            if authManager.isAuthenticated {
+                                // 已登录，显示退出登录确认
+                                showingLogoutAlert = true
+                            } else {
+                                // 未登录，显示登录页面
+                                showingLoginSheet = true
+                            }
                         } label: {
-                            Image(systemName: "rectangle.portrait.and.arrow.right")
-                                .font(.system(size: 10))
+                            Image(systemName: authManager.isAuthenticated ? "rectangle.portrait.and.arrow.right" : "person.circle")
+                                .font(.system(size: 16))
                                 .foregroundColor(.gray)
                                 .padding(8)
-                                .background(Color.white.opacity(0.8))
+                                .background(Color.white.opacity(0.6))
                                 .clipShape(Circle())
                                 .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                         }
                     }
                     .padding(.horizontal, 10)
-                    .padding(.top, 4) // 增加顶部间距，避免遮挡标题
+                    .padding(.top, 2) // 增加顶部间距，避免遮挡标题
                     
                     Spacer()
                     
@@ -175,6 +182,17 @@ struct ContentView: View {
                 }
             } message: {
                 Text("您确定要退出登录吗？")
+            }
+            .sheet(isPresented: $showingLoginSheet) {
+                LoginView()
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
+            .onChange(of: authManager.isAuthenticated) { _, newValue in
+                if newValue && showingLoginSheet {
+                    // 用户登录成功，关闭登录浮层
+                    showingLoginSheet = false
+                }
             }
         }
     }

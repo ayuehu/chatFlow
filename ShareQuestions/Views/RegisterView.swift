@@ -129,7 +129,7 @@ struct RegisterView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color(hex: "#407FFD"))
+                                .background(Color(hex: "#000000"))
                                 .cornerRadius(10)
                         }
                         .disabled(username.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty || authManager.isLoading)
@@ -141,7 +141,7 @@ struct RegisterView: View {
                         } label: {
                             Text("已有账号？返回登录")
                                 .font(.system(size: 16))
-                                .foregroundColor(Color(hex: "#407FFD"))
+                                .foregroundColor(Color(hex: "#C8CAD9"))
                         }
                     }
                     .padding(.horizontal, 20)
@@ -209,7 +209,7 @@ struct RegisterView: View {
                     localErrorMessage = "注册成功，请登录"
                     
                     // 延迟一秒后返回登录页面
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         presentationMode.wrappedValue.dismiss()
                     }
                 }

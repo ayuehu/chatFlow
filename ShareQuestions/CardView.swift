@@ -12,6 +12,8 @@ struct CardView: View {
     @State private var chatMessages: [ChatMessage] = []
     @Environment(\.modelContext) private var modelContext
     @State private var showLikeAnimation: Bool = false
+    @State private var showLoginSheet: Bool = false
+    @StateObject private var authManager = AuthManager.shared
     
     var body: some View {
         GeometryReader { geometry in
@@ -205,6 +207,25 @@ struct CardView: View {
                     saveChatHistory()
                 }
             }
+            .sheet(isPresented: $showLoginSheet) {
+                LoginView()
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
+            .onChange(of: authManager.isAuthenticated) { _, newValue in
+                if newValue && showLoginSheet {
+                    // 用户登录成功，关闭登录浮层
+                    showLoginSheet = false
+                    
+                    // 如果是通过点赞按钮触发的登录，登录成功后自动执行点赞操作
+                    if !item.isLiked {
+                        // 延迟一点执行点赞，确保UI更新完成
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            toggleLikeAfterLogin()
+                        }
+                    }
+                }
+            }
         }
         .background(Color(hex: "#F7F8FC"))
         .safeAreaInset(edge: .top) {
@@ -214,6 +235,13 @@ struct CardView: View {
     
     // 切换点赞状态
     private func toggleLike() {
+        // 检查用户是否已登录
+        if !authManager.isAuthenticated {
+            // 未登录，显示登录页面
+            showLoginSheet = true
+            return
+        }
+        
         // 添加触感反馈
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.prepare()
@@ -238,6 +266,33 @@ struct CardView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 showLikeAnimation = false
             }
+        }
+    }
+    
+    // 登录成功后执行点赞操作
+    private func toggleLikeAfterLogin() {
+        // 添加触感反馈
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.prepare()
+        generator.impactOccurred()
+        
+        // 直接修改item的isLiked属性
+        item.isLiked = true
+        
+        // 保存点赞状态
+        do {
+            try modelContext.save()
+            print("登录后点赞状态已保存")
+        } catch {
+            print("登录后保存点赞状态失败: \(error)")
+        }
+        
+        // 显示点赞动画
+        showLikeAnimation = true
+        
+        // 1.5秒后隐藏动画
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            showLikeAnimation = false
         }
     }
     
