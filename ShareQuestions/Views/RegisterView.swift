@@ -167,6 +167,10 @@ struct RegisterView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 isUsernameFocused = true
             }
+            
+            // 清除之前的错误信息
+            localErrorMessage = nil
+            authManager.errorMessage = nil
         }
     }
     
@@ -212,6 +216,11 @@ struct RegisterView: View {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         presentationMode.wrappedValue.dismiss()
                     }
+                }
+                
+                // 确保注册失败后重置加载状态
+                if authManager.errorMessage != nil && authManager.isLoading {
+                    authManager.isLoading = false
                 }
             }
         }

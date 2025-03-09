@@ -16,6 +16,7 @@ final class Item {
     var answer: String
     var thinking: String = ""
     var type: String = ""
+    var index: Int = 0  // 添加索引字段
     var timestamp: Date
     var isViewed: Bool
     var isLiked: Bool = false
@@ -116,11 +117,13 @@ final class Item {
         self.timestamp = timestamp
         self.isViewed = isViewed
     }
-    init(question: String, answer: String, thinking: String, type: String, timestamp: Date = Date(), isViewed: Bool = false) {
+    
+    init(question: String, answer: String, thinking: String, type: String, index: Int = 0, timestamp: Date = Date(), isViewed: Bool = false) {
         self.question = question
         self.answer = answer
         self.thinking = thinking
         self.type = type
+        self.index = index
         self.timestamp = timestamp
         self.isViewed = isViewed
     }

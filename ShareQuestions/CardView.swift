@@ -36,16 +36,7 @@ struct CardView: View {
                         
                         // 类型和字数信息
                         HStack(spacing: 8) {
-                            Text("@DeepSeek")
-                                .font(.system(size: 13))
-                                .foregroundColor(Color(hex: "#8F91A8"))
-                                .tracking(0.2)
-                                .lineSpacing(7)
-                            
-                            Text(" | ")
-                                .font(.system(size: 13))
-                                .foregroundColor(Color(hex: "#8F91A8"))
-                            
+    
                             if !item.type.isEmpty {
                                 Text("# \(item.type)")
                                     .font(.system(size: 13))
@@ -239,6 +230,8 @@ struct CardView: View {
         if !authManager.isAuthenticated {
             // 未登录，显示登录页面
             showLoginSheet = true
+            // 清除之前的错误信息
+            authManager.errorMessage = nil
             return
         }
         
@@ -253,6 +246,18 @@ struct CardView: View {
         // 保存点赞状态
         do {
             try modelContext.save()
+            
+            // 更新AppConfig中的已点赞索引
+            let descriptor = FetchDescriptor<AppConfig>()
+            if let appConfig = try modelContext.fetch(descriptor).first {
+                if item.isLiked {
+                    appConfig.addLikedIndex(item.index)
+                } else {
+                    appConfig.removeLikedIndex(item.index)
+                }
+                try modelContext.save()
+            }
+            
             print("点赞状态已保存")
         } catch {
             print("保存点赞状态失败: \(error)")
@@ -282,6 +287,14 @@ struct CardView: View {
         // 保存点赞状态
         do {
             try modelContext.save()
+            
+            // 更新AppConfig中的已点赞索引
+            let descriptor = FetchDescriptor<AppConfig>()
+            if let appConfig = try modelContext.fetch(descriptor).first {
+                appConfig.addLikedIndex(item.index)
+                try modelContext.save()
+            }
+            
             print("登录后点赞状态已保存")
         } catch {
             print("登录后保存点赞状态失败: \(error)")

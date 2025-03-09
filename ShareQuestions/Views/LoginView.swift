@@ -78,6 +78,13 @@ struct LoginView: View {
                                         presentationMode.wrappedValue.dismiss()
                                     }
                                 }
+                                
+                                // 确保登录失败后重置加载状态
+                                if !authManager.isAuthenticated && authManager.isLoading {
+                                    DispatchQueue.main.async {
+                                        authManager.isLoading = false
+                                    }
+                                }
                             }
                         } label: {
                             Text("登录")
@@ -126,6 +133,9 @@ struct LoginView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     isIdentifierFocused = true
                 }
+                
+                // 清除之前的错误信息
+                authManager.errorMessage = nil
             }
             // 监听登录状态变化
             .onChange(of: authManager.isAuthenticated) { _, newValue in

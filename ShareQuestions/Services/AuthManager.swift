@@ -51,9 +51,28 @@ class AuthManager: ObservableObject {
         
         do {
             try await AuthService.shared.login(identifier: identifier, password: password)
+            
+            // 延迟检查登录状态，给AuthService足够时间更新isAuthenticated
+            try await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
+            
+            // 如果登录失败但没有抛出异常，确保重置加载状态
+            if !self.isAuthenticated {
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                    if self.errorMessage == nil {
+                        self.errorMessage = "登录失败，请检查用户名和密码"
+                    }
+                }
+            } else {
+                // 登录成功，确保清除错误信息
+                DispatchQueue.main.async {
+                    self.errorMessage = nil
+                    self.isLoading = false
+                }
+            }
         } catch {
             DispatchQueue.main.async {
-                self.errorMessage = "登录失败: \(error.localizedDescription)"
+                self.errorMessage = "登录失败，请检查用户名和密码"
                 self.isLoading = false
             }
         }
@@ -80,6 +99,9 @@ class AuthManager: ObservableObject {
                             isLoggedIn: true
                         )
                         self.isAuthenticated = true
+                        self.errorMessage = nil // 确保清除错误信息
+                    } else {
+                        self.errorMessage = "获取用户信息失败"
                     }
                     print("username", username)
                     print("email", email)

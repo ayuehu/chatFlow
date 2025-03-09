@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		51024C322D772D820041270B /* LeanCloud in Frameworks */ = {isa = PBXBuildFile; productRef = 51024C312D772D820041270B /* LeanCloud */; };
 		518BFABE2D6B1B3000ED5A20 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 518BFABD2D6B1B3000ED5A20 /* MarkdownUI */; };
-		518BFAD32D6E247E00ED5A20 /* Data in Resources */ = {isa = PBXBuildFile; fileRef = 518BFAD22D6E247E00ED5A20 /* Data */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -33,12 +32,24 @@
 		518BFA882D6A68D100ED5A20 /* ShareQuestions.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShareQuestions.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		518BFA9A2D6A68D300ED5A20 /* ShareQuestionsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShareQuestionsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		518BFAA42D6A68D300ED5A20 /* ShareQuestionsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShareQuestionsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		518BFAD22D6E247E00ED5A20 /* Data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Data; path = ShareQuestions/Data; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		51024C592D7DF1B80041270B /* Exceptions for "ShareQuestions" folder in "ShareQuestions" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				questions.txt,
+			);
+			target = 518BFA872D6A68D100ED5A20 /* ShareQuestions */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		518BFA8A2D6A68D100ED5A20 /* ShareQuestions */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				51024C592D7DF1B80041270B /* Exceptions for "ShareQuestions" folder in "ShareQuestions" target */,
+			);
 			path = ShareQuestions;
 			sourceTree = "<group>";
 		};
@@ -84,7 +95,6 @@
 		518BFA7F2D6A68D000ED5A20 = {
 			isa = PBXGroup;
 			children = (
-				518BFAD22D6E247E00ED5A20 /* Data */,
 				518BFA8A2D6A68D100ED5A20 /* ShareQuestions */,
 				518BFA9D2D6A68D300ED5A20 /* ShareQuestionsTests */,
 				518BFAA72D6A68D300ED5A20 /* ShareQuestionsUITests */,
@@ -119,7 +129,7 @@
 			buildPhases = (
 				518BFA842D6A68D100ED5A20 /* Sources */,
 				518BFA852D6A68D100ED5A20 /* Frameworks */,
-				518BFA862D6A68D100ED5A20 /* Resources */,
+				51024C582D7DF1B80041270B /* Resources */,
 			);
 			buildRules = (
 			);
@@ -232,11 +242,10 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		518BFA862D6A68D100ED5A20 /* Resources */ = {
+		51024C582D7DF1B80041270B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				518BFAD32D6E247E00ED5A20 /* Data in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
