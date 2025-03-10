@@ -16,7 +16,7 @@ struct LoginView: View {
                 VStack(spacing: 30) {
                     // 标题
                     VStack(spacing: 8) {
-                        Text("ChatFlow")
+                        Text("Kitty")
                             .font(.system(size: 28, weight: .medium))
                             .foregroundColor(Color(hex: "#2C2C36"))
                     }
