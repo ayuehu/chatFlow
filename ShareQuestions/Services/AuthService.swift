@@ -160,4 +160,25 @@ class AuthService {
         let hashed = SHA256.hash(data: inputData)
         return hashed.compactMap { String(format: "%02x", $0) }.joined()
     }
+    
+    // 注销账号（从数据库中删除用户）
+    func deleteAccount() async throws {
+        // 确保有当前登录用户
+        guard let currentUser = LCApplication.default.currentUser else {
+            throw NSError(domain: "AuthService", code: 1002, userInfo: [NSLocalizedDescriptionKey: "没有登录用户"])
+        }
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            currentUser.delete { result in
+                switch result {
+                case .success:
+                    print("用户账号已成功注销")
+                    continuation.resume(returning: ())
+                case .failure(let error):
+                    print("注销账号失败: \(error)")
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
 } 

@@ -23,7 +23,11 @@ struct ContentView: View {
     @StateObject private var authManager = AuthManager.shared
     @State private var showingLogoutAlert = false
     @State private var showingLoginSheet = false
+    @State private var showingDeleteAccountAlert = false
+    @State private var showingDeleteAccountConfirmation = false
     @State private var isLoading: Bool
+    @State private var showToast = false
+    @State private var toastMessage = ""
     var preloadedData: Bool
     
     init(preloadedData: Bool = false) {
@@ -239,8 +243,41 @@ struct ContentView: View {
                 Button("退出登录", role: .destructive) {
                     authManager.logout()
                 }
+                Button("注销账号", role: .destructive) {
+                    showingDeleteAccountAlert = true
+                }
             } message: {
                 Text("您确定要退出登录吗？")
+            }
+            .alert("注销账号", isPresented: $showingDeleteAccountAlert) {
+                Button("取消", role: .cancel) { }
+                Button("确认注销", role: .destructive) {
+                    showingDeleteAccountConfirmation = true
+                }
+            } message: {
+                Text("注销账号将删除您的所有数据，此操作不可撤销。\n\n您确定要继续吗？")
+            }
+            .alert("最终确认", isPresented: $showingDeleteAccountConfirmation) {
+                Button("取消", role: .cancel) { }
+                Button("确认注销", role: .destructive) {
+                    Task {
+                        let success = await authManager.deleteAccount()
+                        if success {
+                            // 注销成功，显示Toast提示
+                            DispatchQueue.main.async {
+                                toastMessage = "账号已成功注销"
+                                showToast = true
+                                
+                                // 3秒后自动隐藏Toast
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                    showToast = false
+                                }
+                            }
+                        }
+                    }
+                }
+            } message: {
+                Text("请再次确认：您的账号将被永久删除，所有数据将无法恢复。")
             }
             .sheet(isPresented: $showingLoginSheet) {
                 LoginView()
@@ -252,6 +289,24 @@ struct ContentView: View {
                     // 用户登录成功，关闭登录浮层
                     showingLoginSheet = false
                 }
+            }
+            
+            // Toast提示
+            if showToast {
+                VStack {
+                    Spacer()
+                    
+                    Text(toastMessage)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Color.black.opacity(0.7))
+                        .cornerRadius(8)
+                        .padding(.bottom, 100)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                .animation(.easeInOut, value: showToast)
+                .zIndex(100) // 确保Toast显示在最上层
             }
         }
     }

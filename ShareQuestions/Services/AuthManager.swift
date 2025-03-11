@@ -123,4 +123,29 @@ class AuthManager: ObservableObject {
         self.isAuthenticated = false
         self.currentUser = nil
     }
+    
+    // 注销账号
+    func deleteAccount() async -> Bool {
+        DispatchQueue.main.async {
+            self.isLoading = true
+            self.errorMessage = nil
+        }
+        
+        do {
+            try await AuthService.shared.deleteAccount()
+            
+            DispatchQueue.main.async {
+                self.isAuthenticated = false
+                self.currentUser = nil
+                self.isLoading = false
+            }
+            return true
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = "注销账号失败: \(error.localizedDescription)"
+                self.isLoading = false
+            }
+            return false
+        }
+    }
 } 
