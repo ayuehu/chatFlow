@@ -208,7 +208,7 @@ struct RegisterView: View {
             
             // 注册成功后，自动返回登录页面
             DispatchQueue.main.async {
-                if authManager.errorMessage == nil {
+                if authManager.isAuthenticated {
                     // 显示成功提示
                     localErrorMessage = "注册成功，请登录"
                     
@@ -216,6 +216,9 @@ struct RegisterView: View {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         presentationMode.wrappedValue.dismiss()
                     }
+                } else if authManager.errorMessage != nil {
+                    // 如果有错误信息，显示错误
+                    localErrorMessage = authManager.errorMessage
                 }
                 
                 // 确保注册失败后重置加载状态

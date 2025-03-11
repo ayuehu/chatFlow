@@ -89,8 +89,9 @@ class AuthManager: ObservableObject {
             print("register success")
             DispatchQueue.main.async {
                 do {
-                    if let username = try lcUser.get("username") as? String,
-                       let email = try lcUser.get("email") as? String,
+                    // 尝试从LCUser中获取用户信息
+                    if let username = try? lcUser.get("username") as? String,
+                       let email = try? lcUser.get("email") as? String,
                        let objectId = lcUser.objectId?.stringValue {
                         self.currentUser = User(
                             username: username,
@@ -101,12 +102,30 @@ class AuthManager: ObservableObject {
                         self.isAuthenticated = true
                         self.errorMessage = nil // 确保清除错误信息
                     } else {
-                        self.errorMessage = "获取用户信息失败"
+                        // 如果无法从LCUser获取信息，使用注册时提供的信息
+                        self.currentUser = User(
+                            username: username,
+                            email: email,
+                            objectId: lcUser.objectId?.stringValue,
+                            isLoggedIn: true
+                        )
+                        self.isAuthenticated = true
+                        self.errorMessage = nil // 确保清除错误信息
                     }
                     print("username", username)
                     print("email", email)
                 } catch {
-                    self.errorMessage = "获取用户信息失败: \(error.localizedDescription)"
+                    // 即使获取用户信息失败，也不显示错误，因为注册已成功
+                    print("获取用户信息失败，但注册成功: \(error.localizedDescription)")
+                    // 使用注册时提供的信息
+                    self.currentUser = User(
+                        username: username,
+                        email: email,
+                        objectId: lcUser.objectId?.stringValue,
+                        isLoggedIn: true
+                    )
+                    self.isAuthenticated = true
+                    self.errorMessage = nil
                 }
                 self.isLoading = false
             }

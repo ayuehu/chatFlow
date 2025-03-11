@@ -36,7 +36,19 @@ class AuthService {
                 switch result {
                 case .success:
                     print("新用户注册成功")
-                    continuation.resume(returning: user)
+                    
+                    // 注册成功后自动登录
+                    _ = LCUser.logIn(username: username, password: hashedPassword) { loginResult in
+                        switch loginResult {
+                        case .success(let loggedInUser):
+                            print("注册后自动登录成功")
+                            continuation.resume(returning: loggedInUser)
+                        case .failure(let error):
+                            print("注册后自动登录失败: \(error)")
+                            // 即使自动登录失败，也返回注册成功的用户
+                            continuation.resume(returning: user)
+                        }
+                    }
                 case .failure(error: let error):
                     print("注册失败: \(error)")
                     continuation.resume(throwing: error)
